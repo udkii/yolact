@@ -2,6 +2,9 @@ from backbone import ResNetBackbone, VGGBackbone, ResNetBackboneGN, DarkNetBackb
 from math import sqrt
 import torch
 
+#nh_edit
+from backbone import Res2Net, Bottle2neck
+
 # for making bounding boxes pretty
 COLORS = ((244,  67,  54),
           (233,  30,  99),
@@ -109,11 +112,11 @@ dataset_base = Config({
     'name': 'Base Dataset',
 
     # Training images and annotations
-    'train_images': './data/coco/images/',
+    'train_images': './data/coco/images/JPEGImages',
     'train_info':   'path_to_annotation_file',
 
     # Validation images and annotations.
-    'valid_images': './data/coco/images/',
+    'valid_images': './data/coco/images/JPEGImages',
     'valid_info':   'path_to_annotation_file',
 
     # Whether or not to load GT. If this is False, eval.py quantitative evaluation won't work.
@@ -173,7 +176,21 @@ pascal_sbd_dataset = dataset_base.copy({
 })
 
 
+scaffold_dataset = dataset_base.copy({
+    'name': 'Scaffold',
 
+    'train_images': './data/train/images/',
+    'train_info': './data/annotations.json',
+
+    'valid_images': './data/val/images/',
+    'valid_info' : './data/annotations_val.json',
+
+
+    'class_names': ('vertical', 'guard', 'basejack', 'platform', 'stairs' ),
+    'sca_gt':True,
+    
+    'label_map' : {0 : 1, 1:2, 2:3, 3:4, 4:5}
+})
 
 
 # ----------------------- TRANSFORMS ----------------------- #
@@ -254,7 +271,7 @@ resnet101_dcn_inter3_backbone = resnet101_backbone.copy({
 
 resnet50_backbone = resnet101_backbone.copy({
     'name': 'ResNet50',
-    'path': 'resnet50-19c8e357.pth',
+    'path': 'resnet50-19c8e357.pth',    
     'type': ResNetBackbone,
     'args': ([3, 4, 6, 3],),
     'transform': resnet_transform,
@@ -264,6 +281,18 @@ resnet50_dcnv2_backbone = resnet50_backbone.copy({
     'name': 'ResNet50_DCNv2',
     'args': ([3, 4, 6, 3], [0, 4, 6, 3]),
 })
+
+
+#nh_edit
+res2net50_backbone = resnet50_backbone.copy({
+    'name' : 'Res2Net50',
+    'type' : Res2Net,
+    'path' : 'res2net50_26w_4s-06e79181.pth',
+    'args': ([3, 4, 6, 3],),
+    'transform': resnet_transform,
+
+})
+
 
 darknet53_backbone = backbone_base.copy({
     'name': 'DarkNet53',
@@ -766,6 +795,44 @@ yolact_resnet50_pascal_config = yolact_resnet50_config.copy({
         'use_square_anchors': False,
     })
 })
+
+yolact_resnet50_scaffold_config = yolact_base_config.copy({
+    'name': 'yolact_plus_resnet50_scaffold', 
+
+    # Dataset stuff
+    'dataset': scaffold_dataset,
+    'num_classes': len(scaffold_dataset.class_names) + 1,
+
+    'max_size' : 550,
+    'max_iter': 7000,
+    'lr_steps': (60000, 100000),
+
+#nh_edit
+#    'backbone': yolact_resnet50_config.backbone.copy({
+
+    'backbone' : res2net50_backbone.copy({
+        'pred_aspect_ratios': [ [[0.1, 1/2, 1, 2, 10]] ]*5,
+        'selected_layers': list(range(1, 4)),
+
+        'pred_scales': [[32], [64], [128], [256], [512]],
+        'use_square_anchors': False,
+    })
+})
+
+
+'''
+    'backbone': yolact_base_config.backbone.copy({
+        #nh edit
+        'pred_aspect_ratios': [ [[0.1, 1/2, 1, 2, 10]] ]*5,
+
+        'pred_scales': [[32], [64], [128], [256], [512]],
+        'use_square_anchors': False,
+    })
+})
+
+'''
+
+
 
 # ----------------------- YOLACT++ CONFIGS ----------------------- #
 

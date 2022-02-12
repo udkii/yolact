@@ -11,9 +11,7 @@ from collections import defaultdict
 from data.config import cfg, mask_type
 from layers import Detect
 from layers.interpolate import InterpolateModule
-#from backbone_nh_edit import construct_backbone
 from backbone import construct_backbone
-
 
 import torch.backends.cudnn as cudnn
 from utils import timer
@@ -50,11 +48,13 @@ class PredictionModule(nn.Module):
     """
     The (c) prediction module adapted from DSSD:
     https://arxiv.org/pdf/1701.06659.pdf
+
     Note that this is slightly different to the module in the paper
     because the Bottleneck block actually has a 3x3 convolution in
     the middle instead of a 1x1 convolution. Though, I really can't
     be arsed to implement it myself, and, who knows, this might be
     better.
+
     Args:
         - in_channels:   The input feature size.
         - out_channels:  The output feature size (must be a multiple of 4).
@@ -125,7 +125,6 @@ class PredictionModule(nn.Module):
 
         self.aspect_ratios = aspect_ratios
         self.scales = scales
-        print(scales)
 
         self.priors = None
         self.last_conv_size = None
@@ -136,6 +135,7 @@ class PredictionModule(nn.Module):
         Args:
             - x: The convOut from a layer in the backbone network
                  Size: [batch_size, in_channels, conv_h, conv_w])
+
         Returns a tuple (bbox_coords, class_confs, mask_output, prior_boxes) with sizes
             - bbox_coords: [batch_size, conv_h*conv_w*num_priors, 4]
             - class_confs: [batch_size, conv_h*conv_w*num_priors, num_classes]
@@ -266,11 +266,13 @@ class FPN(ScriptModuleWrapper):
     """
     Implements a general version of the FPN introduced in
     https://arxiv.org/pdf/1612.03144.pdf
+
     Parameters (in cfg.fpn):
         - num_features (int): The number of output features in the fpn layers.
         - interpolation_mode (str): The mode to pass to F.interpolate.
         - num_downsample (int): The number of downsampled layers to add onto the selected layers.
                                 These extra layers are downsampled from the last selected layer.
+
     Args:
         - in_channels (list): For each conv layer you supply in the forward pass,
                               how many features will it have?
@@ -376,13 +378,18 @@ class FastMaskIoUNet(ScriptModuleWrapper):
 
 class Yolact(nn.Module):
     """
+
+
     ██╗   ██╗ ██████╗ ██╗      █████╗  ██████╗████████╗
     ╚██╗ ██╔╝██╔═══██╗██║     ██╔══██╗██╔════╝╚══██╔══╝
      ╚████╔╝ ██║   ██║██║     ███████║██║        ██║   
       ╚██╔╝  ██║   ██║██║     ██╔══██║██║        ██║   
        ██║   ╚██████╔╝███████╗██║  ██║╚██████╗   ██║   
        ╚═╝    ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝   ╚═╝ 
+
+
     You can set the arguments by changing them in the backbone config object in config.py.
+
     Parameters (in cfg.backbone):
         - selected_layers: The indices of the conv layers to use for prediction.
         - pred_scales:     A list with len(selected_layers) containing tuples of scales (see PredictionModule)
@@ -438,19 +445,16 @@ class Yolact(nn.Module):
         cfg.num_heads = len(self.selected_layers)
 
         for idx, layer_idx in enumerate(self.selected_layers):
-            print(idx)
             # If we're sharing prediction module weights, have every module's parent be the first one
             parent = None
             if cfg.share_prediction_module and idx > 0:
                 parent = self.prediction_layers[0]
-            print()
 
             pred = PredictionModule(src_channels[layer_idx], src_channels[layer_idx],
                                     aspect_ratios = cfg.backbone.pred_aspect_ratios[idx],
                                     scales        = cfg.backbone.pred_scales[idx],
                                     parent        = parent,
                                     index         = idx)
-
             self.prediction_layers.append(pred)
 
         # Extra parameters for the extra losses
@@ -483,7 +487,12 @@ class Yolact(nn.Module):
             if key.startswith('fpn.downsample_layers.'):
                 if cfg.fpn is not None and int(key.split('.')[2]) >= cfg.fpn.num_downsample:
                     del state_dict[key]
-        self.load_state_dict(state_dict)
+#nh edit       
+#        self.load_state_dict(state_dict)
+        try:
+            self.load_state_dict(state_dict)
+        except RuntimeError as e:
+            print('Ignoring"' + str(e) + '"')
 
     def init_weights(self, backbone_path):
         """ Initialize weights for training. """
@@ -556,7 +565,6 @@ class Yolact(nn.Module):
 
                 module.weight.requires_grad = enable
                 module.bias.requires_grad = enable
-    
     def forward(self, x):
         """ The input should be of size [batch_size, 3, img_h, img_w] """
         _, _, img_h, img_w = x.size()
@@ -564,7 +572,7 @@ class Yolact(nn.Module):
         cfg._tmp_img_w = img_w
         
         with timer.env('backbone'):
-            _, outs = self.backbone(x)
+            outs = self.backbone(x)
 
         if cfg.fpn is not None:
             with timer.env('fpn'):
