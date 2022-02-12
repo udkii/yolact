@@ -178,13 +178,11 @@ pascal_sbd_dataset = dataset_base.copy({
 
 scaffold_dataset = dataset_base.copy({
     'name': 'Scaffold',
-
     'train_images': './data/train/images/',
     'train_info': './data/annotations.json',
 
     'valid_images': './data/val/images/',
     'valid_info' : './data/annotations_val.json',
-
 
     'class_names': ('vertical', 'guard', 'basejack', 'platform', 'stairs' ),
     'sca_gt':True,
@@ -796,10 +794,25 @@ yolact_resnet50_pascal_config = yolact_resnet50_config.copy({
     })
 })
 
-yolact_resnet50_scaffold_config = yolact_base_config.copy({
-    'name': 'yolact_plus_resnet50_scaffold', 
 
-    # Dataset stuff
+yolact_resnet50_scaffold_config = yolact_resnet50_config.copy({
+    'name': 'yolact_plus_resnet50_scaffold', # Will default to yolact_resnet50_pascal
+     # Dataset stuff
+    'dataset': scaffold_dataset,
+    'num_classes': len(scaffold_dataset.class_names) + 1,
+#'max_size' : 512,
+    'max_iter': 1000,
+    'lr_steps': (60000, 100000),
+    
+    'backbone': yolact_resnet50_config.backbone.copy({
+        'pred_scales': [[32], [64], [128], [256], [512]],
+        'use_square_anchors': False,
+    })
+})
+
+yolact_res2net50_scaffold_config =  yolact_base_config.copy({
+    'name': 'yolact_plus_res2net50_scaffold', 
+     # Dataset stuff
     'dataset': scaffold_dataset,
     'num_classes': len(scaffold_dataset.class_names) + 1,
 
@@ -813,7 +826,6 @@ yolact_resnet50_scaffold_config = yolact_base_config.copy({
     'backbone' : res2net50_backbone.copy({
         'pred_aspect_ratios': [ [[0.1, 1/2, 1, 2, 10]] ]*5,
         'selected_layers': list(range(1, 4)),
-
         'pred_scales': [[32], [64], [128], [256], [512]],
         'use_square_anchors': False,
     })
@@ -831,8 +843,6 @@ yolact_resnet50_scaffold_config = yolact_base_config.copy({
 })
 
 '''
-
-
 
 # ----------------------- YOLACT++ CONFIGS ----------------------- #
 

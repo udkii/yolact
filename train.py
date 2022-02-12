@@ -349,15 +349,17 @@ def train():
                     print(('[%3d] %7d ||' + (' %s: %.3f |' * len(losses)) + ' T: %.3f || ETA: %s || timer: %.3f')
                             % tuple([epoch, iteration] + loss_labels + [total, eta_str, elapsed]), flush=True)
 
-                    # custom code for tensorboard_nh edit
-                    #for iteration in range(start_iter, max_iter):
 
-                        #if iteration % 10 == 0:
-                            #summary.add_scalar('B', loss_labels[1], iteration)
-                            #summary.add_scalar('C', loss_labels[3], iteration)
-                            #summary.add_scalar('M', loss_labels[5], iteration)
-                            #summary.add_scalar('S', loss_labels[7], iteration)
-                            #summary.add_scalar('loss', loss.item(), iteration)
+                    # custom code for tensorboard
+                    # TODO: 주석처리 왜 됐는지 확인
+                    for iteration in range(start_iter, max_iter):
+
+                        if iteration % 10 == 0:
+                            summary.add_scalar('B', loss_labels[1], iteration)
+                            summary.add_scalar('C', loss_labels[3], iteration)
+                            summary.add_scalar('M', loss_labels[5], iteration)
+                            summary.add_scalar('S', loss_labels[7], iteration)
+                            summary.add_scalar('loss', loss.item(), iteration)
 
                 if args.log:
                     precision = 5
