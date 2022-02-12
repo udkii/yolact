@@ -810,6 +810,9 @@ yolact_resnet50_scaffold_config = yolact_resnet50_config.copy({
     })
 })
 
+
+#nh_edit _test
+
 yolact_res2net50_scaffold_config =  yolact_base_config.copy({
     'name': 'yolact_plus_res2net50_scaffold', 
      # Dataset stuff
