@@ -20,6 +20,8 @@ import torch.utils.data as data
 import numpy as np
 import argparse
 import datetime
+from tensorboardX import SummaryWriter
+summary = SummaryWriter('log')
 
 # Oof
 import eval as eval_script
@@ -128,6 +130,7 @@ if torch.cuda.is_available():
         torch.set_default_tensor_type('torch.FloatTensor')
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
+
 
 class NetLoss(nn.Module):
     """
@@ -239,22 +242,25 @@ def train():
     conf_loss = 0
     iteration = max(args.start_iter, 0)
     last_time = time.time()
+    print(len(dataset))
 
     epoch_size = len(dataset) // args.batch_size
     num_epochs = math.ceil(cfg.max_iter / epoch_size)
+    
+    print(epoch_size)
+    print(num_epochs)
     
     # Which learning rate adjustment step are we on? lr' = lr * gamma ^ step_index
     step_index = 0
 
     data_loader = data.DataLoader(dataset, args.batch_size,
                                   num_workers=args.num_workers,
-                                  shuffle=True, collate_fn=detection_collate,
+                                  shuffle=False, collate_fn=detection_collate,
                                   pin_memory=True)
     
     
     save_path = lambda epoch, iteration: SavePath(cfg.name, epoch, iteration).get_path(root=args.save_folder)
     time_avg = MovingAverage()
-
     global loss_types # Forms the print order
     loss_avgs  = { k: MovingAverage(100) for k in loss_types }
 
@@ -337,6 +343,16 @@ def train():
                     
                     print(('[%3d] %7d ||' + (' %s: %.3f |' * len(losses)) + ' T: %.3f || ETA: %s || timer: %.3f')
                             % tuple([epoch, iteration] + loss_labels + [total, eta_str, elapsed]), flush=True)
+
+                    # custom code for tensorboard
+                    for iteration in range(start_iter, max_iter):
+
+                        if iteration % 10 == 0:
+                            summary.add_scalar('B', loss_labels[1], iteration)
+                            summary.add_scalar('C', loss_labels[3], iteration)
+                            summary.add_scalar('M', loss_labels[5], iteration)
+                            summary.add_scalar('S', loss_labels[7], iteration)
+                            summary.add_scalar('loss', loss.item(), iteration)
 
                 if args.log:
                     precision = 5
@@ -499,6 +515,7 @@ def compute_validation_map(epoch, iteration, yolact_net, dataset, log:Log=None):
 
 def setup_eval():
     eval_script.parse_args(['--no_bar', '--max_images='+str(args.validation_size)])
+
 
 if __name__ == '__main__':
     train()
