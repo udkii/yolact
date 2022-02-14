@@ -564,7 +564,10 @@ class Yolact(nn.Module):
         cfg._tmp_img_w = img_w
         
         with timer.env('backbone'):
-            _, outs = self.backbone(x)
+#resnet50 돌려보려고 원래 코드 복구
+            outs = self.backbone(x)
+#res2net 돌아가게 하려고 수정했던 코드
+#            _, outs = self.backbone(x)
 
         if cfg.fpn is not None:
             with timer.env('fpn'):

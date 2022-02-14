@@ -801,10 +801,11 @@ yolact_resnet50_scaffold_config = yolact_resnet50_config.copy({
     'dataset': scaffold_dataset,
     'num_classes': len(scaffold_dataset.class_names) + 1,
 #'max_size' : 512,
-    'max_iter': 1000,
+    'max_iter': 10000,
     'lr_steps': (60000, 100000),
     
     'backbone': yolact_resnet50_config.backbone.copy({
+        'pred_aspect_ratios': [ [[0.1, 1/2, 1, 2, 10]] ]*5,
         'pred_scales': [[32], [64], [128], [256], [512]],
         'use_square_anchors': False,
     })

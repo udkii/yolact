@@ -352,6 +352,7 @@ def train():
 
                     # custom code for tensorboard
                     # TODO: 주석처리 왜 됐는지 확인
+                    '''
                     for iteration in range(start_iter, max_iter):
 
                         if iteration % 10 == 0:
@@ -360,6 +361,7 @@ def train():
                             summary.add_scalar('M', loss_labels[5], iteration)
                             summary.add_scalar('S', loss_labels[7], iteration)
                             summary.add_scalar('loss', loss.item(), iteration)
+                    '''
 
                 if args.log:
                     precision = 5
