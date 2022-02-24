@@ -619,6 +619,8 @@ def evalimages(net:Yolact, input_folder:str, output_folder:str):
         name = os.path.basename(path)
         name = '.'.join(name.split('.')[:-1]) + '.png'
         out_path = os.path.join(output_folder, name)
+        print(path)
+        print(out_path)
 
         evalimage(net, path, out_path)
         print(path + ' -> ' + out_path)
@@ -878,12 +880,28 @@ def evaluate(net:Yolact, dataset, train_mode=False):
             inp, out = args.image.split(':')
             evalimage(net, inp, out)
         else:
-            evalimage(net, args.image, "./test/result/result.jpg")
+            evalimage(net, args.image, "./data/test/result/result.jpg")
         return
+
+#nh_edit _ 폴더 자체를 가지고 eval 해보고 싶어서
+#원래 이거만 있고, 위 아래로 아무것도 없음. 
+#    elif args.images is not None:
+#        inp, out = args.images.split(':')
+#        evalimages(net, inp, out)
+#        return
+
     elif args.images is not None:
-        inp, out = args.images.split(':')
-        evalimages(net, inp, out)
+        if ':' in args.images:
+            inp, out = args.images.split(':')
+            evalimages(net, inp, out)
+        else:
+#            file_list=os.listdir('./data/test/data_annotated(JAD)/')
+ #           for i in file_list:
+ #               evalimage(net, args.images, "./data/test/result/{}.jpg".format(i))
+            evalimage(net,args.images, './data/test/result')
         return
+
+
     elif args.video is not None:
         if ':' in args.video:
             inp, out = args.video.split(':')
@@ -1015,6 +1033,24 @@ def calc_map(ap_data):
                 if not ap_obj.is_empty():
                     aps[iou_idx][iou_type].append(ap_obj.get_ap())
 
+
+    ################
+    ### addition ###
+    ################
+        all_maps = {'box': OrderedDict(), 'mask': OrderedDict()}
+        for iou_type in ('box', 'mask'):
+            all_maps[iou_type]['all'] = 0  # Make this first in the ordereddict
+            for i, threshold in enumerate(iou_thresholds):
+                mAP = aps[i][iou_type][_class] * 100 if len(aps[i][iou_type]) > 0 else 0
+                all_maps[iou_type][int(threshold * 100)] = mAP
+            all_maps[iou_type]['all'] = (sum(all_maps[iou_type].values()) / (len(all_maps[iou_type].values()) - 1))
+        print('#################### Class:', cfg.dataset.class_names[_class], '####################')
+        print_maps(all_maps)
+    ####################
+    ### addition end ###
+    ####################
+
+
     all_maps = {'box': OrderedDict(), 'mask': OrderedDict()}
 
     # Looking back at it, this code is really hard to read :/
@@ -1024,7 +1060,8 @@ def calc_map(ap_data):
             mAP = sum(aps[i][iou_type]) / len(aps[i][iou_type]) * 100 if len(aps[i][iou_type]) > 0 else 0
             all_maps[iou_type][int(threshold*100)] = mAP
         all_maps[iou_type]['all'] = (sum(all_maps[iou_type].values()) / (len(all_maps[iou_type].values())-1))
-    
+
+    print('#################### All Classes ####################')  # also added
     print_maps(all_maps)
     
     # Put in a prettier format so we can serialize it to json during training

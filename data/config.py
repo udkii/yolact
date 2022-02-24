@@ -158,6 +158,26 @@ coco2017_testdev_dataset = dataset_base.copy({
     'label_map': COCO_LABEL_MAP
 })
 
+
+#nh_edit_220224
+scaffold_testset = dataset_base.copy({
+    'name': 'scaffold_test',
+
+    'valid_images': './data/test/JAD',
+    'valid_info' : './data/test/JAD/annotations.json',
+
+#original
+    'class_names': ('vertical', 'guard', 'basejack', 'platform', 'stairs' ),
+
+#except basejack
+#    'class_names': ('platform', 'guard', 'stairs' ),
+
+#original    
+    'label_map' : {0 : 1, 1:2, 2:3, 3:4, 4:5}
+#    'label_map' : { 0:1, 1:2, 2:3, }
+
+})
+
 PASCAL_CLASSES = ("aeroplane", "bicycle", "bird", "boat", "bottle",
                   "bus", "car", "cat", "chair", "cow", "diningtable",
                   "dog", "horse", "motorbike", "person", "pottedplant",
@@ -184,10 +204,17 @@ scaffold_dataset = dataset_base.copy({
     'valid_images': './data/val/images/',
     'valid_info' : './data/annotations_val.json',
 
+#original
     'class_names': ('vertical', 'guard', 'basejack', 'platform', 'stairs' ),
+
+#except basejack
+#    'class_names': ('platform', 'guard', 'stairs' ),
     'sca_gt':True,
-    
+
+#original    
     'label_map' : {0 : 1, 1:2, 2:3, 3:4, 4:5}
+#    'label_map' : { 0:1, 1:2, 2:3, }
+
 })
 
 
@@ -801,7 +828,7 @@ yolact_resnet50_scaffold_config = yolact_resnet50_config.copy({
     'dataset': scaffold_dataset,
     'num_classes': len(scaffold_dataset.class_names) + 1,
 #'max_size' : 512,
-    'max_iter': 10000,
+    'max_iter': 3000,
     'lr_steps': (60000, 100000),
     
     'backbone': yolact_resnet50_config.backbone.copy({
@@ -810,6 +837,7 @@ yolact_resnet50_scaffold_config = yolact_resnet50_config.copy({
         'use_square_anchors': False,
     })
 })
+
 
 
 yolact_res2net50_scaffold_config =  yolact_base_config.copy({
